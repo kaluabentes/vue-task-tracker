@@ -5,7 +5,7 @@
   >
     <h3>
       {{ task.text }}
-      <i @click="$emit('delete-task')" class="fas fa-times"></i>
+      <i @click="onRemove" class="fas fa-times"></i>
     </h3>
     <p>{{ task.day }}</p>
   </div>
@@ -16,6 +16,12 @@ export default {
   name: "Task",
   props: {
     task: Object,
+  },
+  methods: {
+    onRemove(e) {
+      e.stopPropagation();
+      this.$emit("delete-task");
+    },
   },
 };
 </script>

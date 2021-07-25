@@ -1,6 +1,9 @@
 <template>
   <div class="container">
-    <Header title="Task Tracker" />
+    <Header @toggle-add-task="toggleAddTask" title="Task Tracker" />
+    <div v-if="showAddTask">
+      <AddTask @add-task="addTask" />
+    </div>
     <Tasks
       @toggle-reminder="toggleReminder"
       @delete-task="deleteTask"
@@ -11,56 +14,55 @@
 
 <script>
 import Header from "./components/Header";
+import AddTask from "./components/AddTask";
 import Tasks from "./components/Tasks";
+import {
+  fetchTasks,
+  fetchTask,
+  createTask,
+  updateTask,
+  deleteTask,
+} from "./services/tasks";
 
 export default {
   name: "App",
   components: {
     Header,
     Tasks,
+    AddTask,
   },
   data() {
     return {
       tasks: [],
+      showAddTask: false,
     };
   },
   methods: {
-    deleteTask(id) {
+    toggleAddTask() {
+      this.showAddTask = !this.showAddTask;
+    },
+    async refreshTasks() {
+      this.tasks = await fetchTasks();
+    },
+    async addTask(task) {
+      await createTask(task);
+      await this.refreshTasks();
+    },
+    async deleteTask(id) {
       if (confirm("Are you sure?")) {
-        this.tasks = this.tasks.filter((task) => task.id !== id);
+        await deleteTask(id);
+        await this.refreshTasks();
       }
     },
-    toggleReminder(id) {
-      this.tasks = this.tasks.map((task) => {
-        if (task.id === id) {
-          task.reminder = !task.reminder;
-        }
-
-        return task;
-      });
+    async toggleReminder(id) {
+      const task = await fetchTask(id);
+      const newTask = { ...task, reminder: !task.reminder };
+      await updateTask(id, newTask);
+      await this.refreshTasks();
     },
   },
-  created() {
-    this.tasks = [
-      {
-        id: "1",
-        text: "Doctors Appointment",
-        day: "March 5th at 2:30pm",
-        reminder: true,
-      },
-      {
-        id: "2",
-        text: "Meeting with boss",
-        day: "March 6th at 1:30pm",
-        reminder: true,
-      },
-      {
-        id: "3",
-        text: "Food shopping",
-        day: "March 7th at 2:00pm",
-        reminder: false,
-      },
-    ];
+  async created() {
+    await this.refreshTasks();
   },
 };
 </script>
